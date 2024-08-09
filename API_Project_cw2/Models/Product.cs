@@ -8,4 +8,6 @@ public class Product
     public string Description { get; set; }
     public string Image { get; set; }
     public int Count { get; set; }
+    
+    public virtual User? User { get; set; }
 }
