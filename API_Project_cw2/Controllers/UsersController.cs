@@ -1,5 +1,12 @@
+using System.Security.Cryptography;
+using System.Text;
 using API_Project_cw2.Data;
+using API_Project_cw2.Interfaces;
 using API_Project_cw2.Models;
+using AutoMapper;
+using API_Project_cw2.Requests;
+using MessengerBackend.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,85 +14,214 @@ using Microsoft.EntityFrameworkCore;
 namespace API_Project_cw2.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/users")]
-public class UsersController : ControllerBase
+public class UserController : Controller
 {
-    private readonly DataContext _context;
+    private readonly IUserService _userService;
+    private readonly IMapper _mapper;
 
-    public UsersController(DataContext context)
+    public UserController(IUserService userService, IMapper mapper)
     {
-        _context = context;
+        _userService = userService;
+        _mapper = mapper;
     }
     
     // отримання всіх користувачів
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+    public  ActionResult<IEnumerable<UserDTO>> GetUsers([FromQuery] int page = 1, [FromQuery] int size = 10)
     {
-        return Ok(await _context.User.ToListAsync()); // Ok() - status 200
+        var users =  _userService.GetUsers(page, size);
+        return Ok(_mapper.Map<IEnumerable<UserDTO>>(users));
     }
-
-    // створення нового користувача
-    [HttpPost]
-    public async Task<ActionResult<User>> AddUser(User user)
+    
+    // отримання користувача за id
+    [HttpGet("{id}")]
+    public async Task<ActionResult<UserDTO>> GetUserById(int id)
     {
-        _context.Add(user);
-        await _context.SaveChangesAsync();
-        return Created("created", user);
-    }
+        var user = await _userService.GetUserById(id);
 
-    // пошук користувачів
-    [HttpGet("searchUser")]
-    public async Task<ActionResult<IEnumerable<User>>> SearchUsers(
-        [FromQuery] string? name,
-        [FromQuery] string? lastName,
-        [FromQuery] int? age)
+        if (user == null)
+            return NotFound();
+        
+        var userDto = _mapper.Map<UserDTO>(user);
+        return Ok(userDto);
+    }
+    
+    // отримання користувачів за нікнеймом
+    [HttpGet("search/{nickname}")]
+    public ActionResult<IEnumerable<User>> SearchUsers(string nickname)
     {
-        var users = _context.User.AsQueryable();
-        if (name != null)
+        var users = _userService.SearchUsers(nickname);
+        if (!users.Any())
         {
-            users = users.Where(x => x.Name == name);
+            return NotFound();
         }
-    
-        if (lastName != null)
-        {
-            users = users.Where(x => x.LastName == lastName);
-        }
-    
-        if (age != null)
-        {
-            users = users.Where(x => x.Age == age);
-        }
-    
-        return Ok(await users.ToListAsync()); // status 200
+        return Ok(_mapper.Map<IEnumerable<UserDTO>>(users));
     }
-
-    //DELETE api/users/1
+    
+// видалення користувача 
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteUser([FromRoute] int id)
     {
-        var user = await _context.User.FindAsync(id);
-        _context.User.Remove(user);
-        await _context.SaveChangesAsync();
+        await _userService.DeleteUser(id);
         return NoContent();
     }
-
-    // оновлення користувача
-    [HttpPut("{id}")]
-    public async Task<ActionResult<User>> UpdateUser(int id, [FromBody] User user)
+    
+// оновлення користувача
+    [HttpPut ("{id}")]
+    public async Task<ActionResult<UserDTO>> UpdateUser(int id,CreateUserRequest request)
     {
-        user.Id = id;
-        _context.User.Update(user);
-        await _context.SaveChangesAsync();
-        return Ok(user);
+        var userDb = await _userService.GetUserById(id);
+        
+        userDb.Nickname = request.Nickname;
+        userDb.Password = HashPassword(request.Password);
+        
+        await _userService.UpdateUser(userDb);
+        return Ok(_mapper.Map<UserDTO>(userDb));
     }
-
-    // часткове оновлення користувача
-    [HttpPatch("{id}")]
-    public async Task<ActionResult<User>> UpdatePartialUser(int id, [FromBody] string name)
+    
+    // метод хешування пароля
+    private string HashPassword(string password)
     {
-        var user = await _context.User.FindAsync(id);
-        user.Name = name;
-        await _context.SaveChangesAsync();
-        return Ok(user);
+        using (var sha256 = SHA256.Create())
+        {
+            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(hashedBytes);
+        }
     }
+    
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ // // реєстрація користувача
+ //    [HttpPost("register")]
+ //    public async Task<IActionResult> Register(CreateUserRequest request)
+ //    {
+ //        // перевірка валідності моделі (CreateUserRequest)
+ //        if (!ModelState.IsValid)
+ //            return BadRequest(ModelState);
+ //        
+ //        try
+ //        {
+ //            var userDb = await _userService.Register(request.Nickname, request.Password);
+ //            
+ //            return Created("user", _mapper.Map<UserDTO>(userDb));
+ //        }
+ //        catch (ArgumentException ex)
+ //        {
+ //            return BadRequest(new { message = ex.Message });
+ //        }
+ //        catch (InvalidOperationException ex)
+ //        {
+ //            return Conflict(new { message = ex.Message });// 409 Conflict - якщо вже існує юзер з таким нікнеймом
+ //        }
+ //        catch (Exception ex)
+ //        {
+ //            return StatusCode(500, new { message = "An unexpected error occurred." }); // 500 Internal Server Error - для всіх інших виключень
+ //        }
+ //    }
+ //
+ //    
+ //    // логування користувача
+ //    [HttpPost("login")]
+ //    public async Task<IActionResult> Login(CreateUserRequest request)
+ //    {
+ //        // перевірка валідності моделі (CreateUserRequest)
+ //        if (!ModelState.IsValid)
+ //            return BadRequest(ModelState);
+ //        
+ //        try
+ //        {
+ //            var userDb = await _userService.Login(request.Nickname, request.Password);
+ //            HttpContext.Session.SetString("user", userDb.Nickname);
+ //            HttpContext.Session.SetInt32("id", userDb.Id);
+ //            
+ //            return Ok(_mapper.Map<UserDTO>(userDb));
+ //        }
+ //        catch (ArgumentException ex)
+ //        {
+ //            return BadRequest(new { message = ex.Message });  // 400 Bad Request - якщо не переданий никнейм або пароль
+ //        }
+ //        catch (UnauthorizedAccessException ex)
+ //        {
+ //            return Unauthorized(new { message = ex.Message }); // 401 Unauthorized - якщо неправільні никнейм або пароль
+ //        }
+ //        catch (Exception ex)
+ //        {
+ //            return StatusCode(500, new { message = "An unexpected error occurred." });  
+ //        }
+ //    }
