@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API_Project_cw2.Services;
 
-public class UserService : IUserService
+internal class UserService : IUserService
 {
     private readonly IRepository _repository;
 
@@ -16,7 +16,7 @@ public class UserService : IUserService
     }
     
 // реєстрація користувача   
-    public async Task<User> Register(string nickname, string password)
+    public async Task<User> Register(string nickname, string password, Role role)
     {
         // валідація вводу
         if (nickname == null || string.IsNullOrEmpty(nickname.Trim()) || nickname.Length < 4 || 
@@ -34,13 +34,14 @@ public class UserService : IUserService
         {
             Nickname = nickname,
             Password = hashedPassword,
+            Role = role
         };
     
         await _repository.Add(newUser);
     
         return newUser;
     }
-    
+
     // метод хешування пароля
     public string HashPassword(string password)
     {

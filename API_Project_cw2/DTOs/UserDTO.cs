@@ -1,4 +1,6 @@
-﻿namespace MessengerBackend.DTOs;
+﻿using API_Project_cw2.Models;
+
+namespace API_Project_cw2.DTOs;
 
 public class UserDTO
 {

@@ -16,7 +16,9 @@ public static class JwtGenerator
         };
         
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(token));
+        
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
+        
         var jwtToken = new JwtSecurityToken(
             claims: claims,
             expires: expiryDate,

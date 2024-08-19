@@ -1,20 +1,18 @@
 using System.Security.Cryptography;
 using System.Text;
-using API_Project_cw2.Data;
+using API_Project_cw2.DTOs;
 using API_Project_cw2.Interfaces;
 using API_Project_cw2.Models;
 using AutoMapper;
 using API_Project_cw2.Requests;
-using MessengerBackend.DTOs;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
 
 namespace API_Project_cw2.Controllers;
 
+//[Authorize(Roles = "Admin")]
 [ApiController]
-[Authorize]
 [Route("api/users")]
 public class UserController : Controller
 {
@@ -70,7 +68,7 @@ public class UserController : Controller
     
 // оновлення користувача
     [HttpPut ("{id}")]
-    public async Task<ActionResult<UserDTO>> UpdateUser(int id,CreateUserRequest request)
+    public async Task<ActionResult<UserDTO>> UpdateUser(int id,LoginUserRequest request)
     {
         var userDb = await _userService.GetUserById(id);
         
