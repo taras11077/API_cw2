@@ -5,7 +5,7 @@ using API_Project_cw2.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Repository = API_Project_cw2.Repository;
+using Repository = API_Project_cw2.Data.Repository;
 
 
 var builder = WebApplication.CreateBuilder(args);

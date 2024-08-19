@@ -4,7 +4,7 @@ using System.Text;
 using API_Project_cw2.Models;
 using Microsoft.IdentityModel.Tokens;
 
-namespace API_Project_cw2;
+namespace API_Project_cw2.Auth;
 
 public static class JwtGenerator
 {
@@ -12,7 +12,8 @@ public static class JwtGenerator
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Role, user.Role.ToString())
         };
         
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(token));

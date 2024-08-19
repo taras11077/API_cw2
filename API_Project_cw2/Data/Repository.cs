@@ -1,8 +1,7 @@
 ﻿using System.Linq.Expressions;
-using API_Project_cw2.Data;
 using API_Project_cw2.Interfaces;
 
-namespace API_Project_cw2;
+namespace API_Project_cw2.Data;
 
 public class Repository : IRepository
 {
