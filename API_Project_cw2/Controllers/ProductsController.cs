@@ -39,7 +39,7 @@ public class ProductsController : Controller
                 product.User = user;
             }
             
-            _productService.AddProduct(product);
+            await _productService.AddProduct(product);
 
             return Created("created", product);
         }

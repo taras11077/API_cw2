@@ -16,24 +16,35 @@ public class Repository : IRepository
     {
         var entityFromFb = _context.Set<T>().Add(entity);
         await _context.SaveChangesAsync();
+        
         return entityFromFb.Entity;
     }
 
     public async Task<T> Update<T>(T entity) where T : class
     {
-        var updated = _context.Update(entity);
+        _context.Set<T>().Update(entity);
         await _context.SaveChangesAsync();
-        return updated.Entity;
+
+        return entity;
     }
 
-    public Task Delete<T>(int id) where T : class
+    public async Task Delete<T>(int id) where T : class
     {
-        throw new NotImplementedException();
+        var entity = await _context.Set<T>().FindAsync(id);
+        if (entity != null)
+        {
+            _context.Set<T>().Remove(entity);
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            throw new ArgumentException("Entity not found");
+        }
     }
 
-    public Task<T> GetById<T>(int id) where T : class
+    public async Task<T> GetById<T>(int id) where T : class
     {
-        throw new NotImplementedException();
+        return await _context.Set<T>().FindAsync(id);
     }
 
     public IQueryable<T> GetAll<T>() where T : class
